@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html ng-app="Blog">
+<head>
+  <title>Localist</title>
+  <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true %>
+  <%= javascript_include_tag 'application', 'data-turbolinks-track' => true %>
+  <%= csrf_meta_tags %>
+</head>
+<body>
+    <input type="hidden" ng-init="currentUser=<%= current_user.to_json %>";/>
+    <div class="blog-masthead">
+      <div class="container">
+        <nav class="blog-nav">
+
+          <a class="blog-nav-item" href="#">Home</a>
+
+          <% if current_user %>
+            <a class="blog-nav-item" href="#/blogs/new">New Blog</a>
+            <a class="blog-nav-item" href="#/recipes/new">New Recipe</a>
+            <a class="blog-nav-item" href="/users/sign_out" data-method='delete'>Logout</a>
+          <% else %>
+            <a class="blog-nav-item" href="/users/sign_in">Login</a>
+            <a class="blog-nav-item" href="/users/sign_up">Register</a>
+          <% end %>
+        </nav>
+      </div>
+    </div>
+    <div class="container main-container">
+    	<div class="row">
+    		<div class="col-md-12">		
+			     <div ng-view></div>
+    		</div>
+  		</div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,48 @@
+<div ng-controller="ShowBlogCtrl">
+  <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+        <h2 class="blog-post-title">
+        	{{blog.title}}
+        </h2>
+        <div ng-show="$root.currentUser && $root.currentUser.id == blog.user_id">
+          <a href="#/blogs/{{blog.id}}/edit">Edit</a>
+          <a href="" ng-click="delete()">Delete</a>
+        </div>
+        <p class="blog-post-meta">{{blog.created_at | date:'MM/dd/yyyy'}} <a href="#">{{blog.user.username}}</a></p>
+        <p>{{blog.content}}</p>
+      </div><!-- /.blog-post -->
+    </div><!-- /.blog-main -->
+  </div><!-- /.row -->
+  
+
+  <div class="row" ng-show="blog.reviews.length > 0">
+    <div class="col-sm-8 blog-main">
+      <h2 class="blog-post-title">
+        All Reviews
+      </h2>
+      <div ng-repeat="review in blog.reviews">
+      {{review.user.username}}: {{review.content}} at {{review.created_at}}
+      </div>
+    </div>
+  </div><!-- /.row -->
+
+  <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+        <h2 class="blog-post-title">
+        	New Reviews
+        </h2>
+  			<div ng-controller="NewReviewCtrl">
+  				<form name="ReviewForm" ng-submit="saveReview(ReviewForm)" novalidate>
+  					<div class="form-group">
+  						{{reivew}}
+  					    <textarea type="text" class="form-control" ng-model="review.content" placeholder="Blog title" required=""></textarea>
+  					  </div>
+  					  <input type="submit" ng-click="submitted=true" class="btn btn-lg btn-primary btn-block"/>
+  				</form>
+  			</div>
+        </div><!-- /.blog-post -->
+    </div><!-- /.blog-main -->
+  </div><!-- /.row -->
+</div>

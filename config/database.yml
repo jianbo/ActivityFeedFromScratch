@@ -1,0 +1,9 @@
+development:
+  adapter: postgresql
+  encoding: unicode
+  host: localhost
+  database: postgres
+  pool: 5
+  username: jianbo
+  password: jianbo
+  

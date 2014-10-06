@@ -1,0 +1,9 @@
+
+  <h1>Activity Feed</h1>
+  <div class="row activity-item" ng-repeat="activity in activities">
+     <content-item  activity="activity"></content-item>
+  </div><!-- /.row -->
+  <ul class="pager" ng-show="totalPage > 1">
+    <li><a href="#/activities/{{currentPage - 1}}" ng-hide="currentPage == 1">Previous</a></li>
+    <li><a href="#/activities/{{nextPage}}" ng-hide="totalPage == 1 || totalPage == currentPage">Next</a></li>
+  </ul>

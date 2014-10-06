@@ -1,0 +1,188 @@
+app = angular.module("Blog", ["ngResource", "ngRoute", 'ng-rails-csrf'])
+
+app.factory "Blog", ["$resource", ($resource) ->
+  $resource("/blogs/:id", {id: "@id"}, {update: {method: "PUT"}})
+]
+
+app.factory "Recipe", ["$resource", ($resource) ->
+  $resource("/recipes/:id", {id: "@id"}, {update: {method: "PUT"}})
+]
+
+app.factory "BlogReview", ["$resource", ($resource) ->
+  $resource("/blogs/:blog_id/reviews/:id", {id: "@id", blog_id: "@blog_id"}, {update: {method: "PUT"}})
+]
+
+app.factory "RecipeReview", ["$resource", ($resource) ->
+  $resource("/recipes/:recipe_id/reviews/:id", {id: "@id", recipe_id: "@recipe_id"}, {update: {method: "PUT"}})
+]
+
+app.directive 'contentItem', ($compile) ->
+    blogCreateTemplate = '<div class="entry">{{activity.user.username}} created a new blog <a href="#/blogs/{{activity.blog.id}}">{{activity.blog.title}}</a> at {{activity.created_at}}</div>';
+    blogUpdateTemplate = '<div class="entry">{{activity.user.username}} updated blog <a href="#/blogs/{{activity.blog.id}}">{{activity.blog.title}}</a> at {{activity.created_at}}</div>';
+    recipeCreateTemplate = '<div class="entry">{{activity.user.username}} created a new recipe <a href="#/recipes/{{activity.recipe.id}}">{{activity.recipe.title}}</a> at {{activity.created_at}}</div>';
+    recipeUpdateTemplate = '<div class="entry">{{activity.user.username}} updated recipe <a href="#/recipes/{{activity.recipe.id}}">{{activity.recipe.title}}</a> at {{activity.created_at}}</div>';
+    reviewCreateTemplate = '<div class="entry">{{activity.user.username}} created a review for <a href="#{{activity.reviewable_path}}">{{activity.reviewable_title}}</a> at {{activity.created_at}}</div>';
+
+    getTemplate = (trackable_type, action) ->
+        template = ''
+        if trackable_type == "Blog"
+          if action == "create"
+            template = blogCreateTemplate
+          else if action == "update"
+            template = blogUpdateTemplate
+        else if trackable_type == "Recipe"
+          if action == "create"
+            template = recipeCreateTemplate
+          else if action == "update"
+            template = recipeUpdateTemplate
+        else if trackable_type == "Review"
+          if action == "create"
+            template = reviewCreateTemplate
+          else if action == "update"
+            template = reviewUpdateTemplate
+
+        return template
+
+    linker = (scope, element, attrs) ->
+        scope.rootDirectory = 'images/'
+        element.html(getTemplate(scope.activity.trackable_type, scope.activity.action)).show()
+        $compile(element.contents())(scope)
+    return {
+        restrict: "E"
+        rep1ace: true
+        link: linker
+        scope: {
+            activity:'='
+        }
+    }
+
+
+###### Controllers #########
+
+
+@ActivityCtrl = ["$scope", "$http", "$routeParams", "$rootScope", ($scope, $http, $routeParams, $rootScope) ->
+  $scope.currentPage = $routeParams.page;
+  $scope.nextPage = parseInt($scope.currentPage) + 1
+  $scope.totalPage = undefined;
+  request = $http.get "/activities/#{$scope.currentPage}"
+  request.then (result) =>
+    console.log(result.data)
+    $scope.activities = result.data.activities
+    $scope.totalPage = result.data.total_page;
+]
+
+@ShowRecipeCtrl = ["$scope", "Recipe", "$routeParams", ($scope, Recipe, $routeParams) ->
+  $scope.recipe = undefined;
+  Recipe.get {id: $routeParams.id}, (data) ->
+    self.original = data
+    $scope.recipe = new Recipe(self.original)
+]
+
+@FormRecipeCtrl = ["$scope", "Recipe", "$location", "$routeParams", ($scope, Recipe, $location, $routeParams) ->
+  $scope.recipe = {};
+
+  if $routeParams.id
+    Recipe.get {id: $routeParams.id}, (data) ->
+      self.original = data
+      $scope.recipe = new Recipe(self.original)
+
+  $scope.saveRecipe = (form) ->
+    if $routeParams.id
+      Recipe.update $scope.recipe, (data)->
+        $location.url("/recipes/" + data.id)
+      , (err) ->
+        alert("Cannot update recipe.")  
+    else
+      Recipe.save $scope.recipe, (data) ->
+        console.log(data)
+        $location.url("/recipes/" + data.id)
+      , (err) ->
+        alert("Cannot create new recipe.")
+]
+
+@ShowBlogCtrl = ["$scope", "Blog", "$routeParams", ($scope, Blog, $routeParams) ->
+  $scope.blog = undefined;
+  Blog.get {id: $routeParams.id}, (data) ->
+    self.original = data
+    $scope.blog = new Blog(self.original)
+
+  $scope.addReview = (item) ->
+    $scope.blog.reviews.unshift(item)
+]
+
+@FormBlogCtrl = ["$scope", "Blog", "$location", "$routeParams", ($scope, Blog, $location, $routeParams) ->
+  $scope.blog = {};
+  if $routeParams.id
+    Blog.get {id: $routeParams.id}, (data) ->
+      self.original = data
+      $scope.blog = new Blog(self.original)
+
+  $scope.saveBlog = (form) ->
+    if $routeParams.id
+      Blog.update $scope.blog, (data)->
+        $location.url("/blogs/" + data.id)
+      , (err) ->
+        alert("Cannot update blog.")  
+    else
+      Blog.save $scope.blog, (data) ->
+        console.log(data)
+        $location.url("/blogs/" + data.id)
+      , (err) ->
+        alert("Cannot create new blog.") 
+]
+
+@NewReviewCtrl = ["$scope", "Blog", "BlogReview", "RecipeReview", "$routeParams", "$route", ($scope, Blog, BlogReview, RecipeReview, $routeParams, $route) ->
+  $scope.review = {};
+  path = $route.current.$$route.originalPath
+  console.log($route)
+
+  $scope.saveReview = (form) ->
+    if path == "/blogs/:id"
+      $scope.review.blog_id = $routeParams.id
+      BlogReview.save $scope.review, (data) ->
+        $scope.$parent.addReview(data)
+        $scope.review = {}
+      , (err) ->
+        alert("error")
+    else
+      alert('1')
+]
+
+###### Routes #########
+
+app.config ["$routeProvider", ($routeProvider) ->
+  $routeProvider.
+  when("/recipes/new", {
+    templateUrl: "<%= asset_path('views/recipes/form.html') %>",
+    controller: "FormRecipeCtrl",
+    routeName:"NewRecipe"
+  }).
+  when("/recipes/:id", {
+    templateUrl: "<%= asset_path('views/recipes/show.html') %>",
+    controller:"ShowRecipeCtrl",
+  }).
+  when("/recipes/:id/edit", {
+    templateUrl: "<%= asset_path('views/recipes/form.html') %>",
+    controller:"FormRecipeCtrl"
+  }).
+  when("/blogs/new", {
+    templateUrl: "<%= asset_path('views/blogs/form.html') %>",
+    controller: "FormBlogCtrl",
+    routeName:"NewBlog"
+  }).
+  when("/blogs/:id/edit", {
+    templateUrl: "<%= asset_path('views/blogs/form.html') %>",
+    controller: "FormBlogCtrl",
+    routeName:"EditBlog"
+  }).
+  when("/blogs/:id", {
+    templateUrl: "<%= asset_path('views/blogs/show.html') %>",
+    routeName:"ShowBlog"
+  }).
+  when("/activities/:page", {
+    templateUrl: "<%= asset_path('views/activity.html') %>",
+    controller: "ActivityCtrl",
+    routeName:"activity"
+  }).  
+  otherwise({redirectTo: "/activities/1"})
+]

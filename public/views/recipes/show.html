@@ -1,0 +1,35 @@
+<div ng-clock>
+  <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+        <h2 class="blog-post-title">
+        	{{recipe.title}}
+        </h2>
+        <div ng-show="$root.currentUser && $root.currentUser.id == recipe.user_id">
+          <a href="#/recipes/{{recipe.id}}/edit">Edit</a>
+          <a href="" ng-click="delete()">Delete</a>
+        </div>
+        <p class="blog-post-meta">{{recipe.created_at | date:'MM/dd/yyyy'}} <a href="#">{{recipe.user.username}}</a></p>
+        <p>{{recipe.content}}</p>
+      </div><!-- /.blog-post -->
+    </div><!-- /.blog-main -->
+  </div><!-- /.row -->
+  
+  <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+        <h2 class="blog-post-title">
+        	New Review
+        </h2>
+			<div ng-controller="NewReviewCtrl">
+				<form name="ReviewForm" ng-submit="saveReview(ReviewForm)" novalidate>
+					<div class="form-group">
+					    <textarea type="text" class="form-control" ng-model="review.content" placeholder="Blog title" required=""></textarea>
+					  </div>
+					  <input type="submit" ng-click="submitted=true" class="btn btn-lg btn-primary btn-block"/>
+				</form>
+			</div>
+      </div><!-- /.recipe-post -->
+    </div><!-- /.recipe-main -->
+  </div><!-- /.row -->
+</div>
